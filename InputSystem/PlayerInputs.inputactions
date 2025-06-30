@@ -1,0 +1,34 @@
+{
+    "name": "PlayerInputs",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "72cc3cd3-75e0-470a-bdc7-2a334c533dbf",
+            "actions": [
+                {
+                    "name": "PickResource",
+                    "type": "Button",
+                    "id": "e36f1633-d102-4e45-9c96-4f2f04db8f17",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "3cfb5d74-c1c1-493b-9e77-09512d1dd723",
+                    "path": "<Keyboard>/e",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PickResource",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

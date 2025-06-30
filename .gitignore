@@ -1,0 +1,13 @@
+*.meta
+*.shader
+*.shadergraph
+*.asset
+*.ttf
+*.mat
+*.cginc
+*.json
+*.hlsl
+*.txt
+*.wlt
+/samples
+/trashbin
