@@ -65,7 +65,7 @@ partial struct testSystem : ISystem
     }
 }
 
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 partial struct testSystem_client : ISystem
 {
     [BurstCompile]
@@ -77,23 +77,10 @@ partial struct testSystem_client : ISystem
     // [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        
         var ecb = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (inventoryItem, entity) in SystemAPI.Query<RefRO<InventoryItem>>().WithEntityAccess())
-        {
-
-            Debug.Log("inventoryItemHere: " + inventoryItem);
-            ItemId itemId = inventoryItem.ValueRO.ItemId;
-            if (itemId.ToInt() == 0)
-            {
-                Debug.Log("equal to null");
-            }
-            else
-            {
-                Debug.Log("itemId int: " + itemId.ToInt());
-            }
-
-        }
-        Debug.Log("inventory item on client");
+        
+        
 
         ecb.Playback(state.EntityManager);
         ecb.Dispose();

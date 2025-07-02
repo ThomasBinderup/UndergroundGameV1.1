@@ -16,8 +16,6 @@ public struct InventoryItem : IComponentData
     public int Quantity;
     [GhostField]
     public int Durability;
-    [GhostField]
-    public bool IsLoaded;
 }
 public struct MoveInventoryItemRpc : IRpcCommand
     {
@@ -57,8 +55,8 @@ public struct InventoryUIIsLoaded_RPC : IRpcCommand
 {
 }
 
+[GhostEnabledBit]
 [GhostComponent(OwnerSendType = SendToOwnerType.SendToOwner)]
-public struct InventoryLoaded : IComponentData
+public struct NotLoaded : IComponentData, IEnableableComponent
 {
-    public bool IsLoaded;
 }

@@ -30,6 +30,7 @@ partial struct OnPickResource_RpcHandler : ISystem
     private EntityQuery query1;
     private EntityQuery resourceQuery;
     private EntityQuery serverInfoQuery;
+    private Unity.Mathematics.Random rng;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -60,6 +61,8 @@ partial struct OnPickResource_RpcHandler : ISystem
             [0] = ComponentType.ReadWrite<ServerInfo>()
         };
         serverInfoQuery = state.GetEntityQuery(serverInfoComponentType);
+
+        rng = new Unity.Mathematics.Random(32823929);
     }
 
     // [BurstCompile]
@@ -89,8 +92,8 @@ partial struct OnPickResource_RpcHandler : ISystem
                 Entity characterEnt = characterBySourceConnection.characterEntity;
                 if (!TryGetClosestPickableResource(characterEnt, ref state, out Entity closestPickableResourceEnt)) return;
                 AddPickableResourceToInventory(characterEnt, ref state, ref closestPickableResourceEnt, ref ecb, networkIdValue, query1);
-                RefRW<InventoryLoaded> invLoaded = SystemAPI.GetSingletonRW<InventoryLoaded>();
-                invLoaded.ValueRW.IsLoaded = false;
+
+
             }
 
         }
@@ -125,11 +128,12 @@ partial struct OnPickResource_RpcHandler : ISystem
             CollidesWith = 1 << 8,
         };
         physicsWorld.OverlapSphere(localToWorldCharacter.Position, radius, ref outHits, filter);
-
+        
         Entity pickableResourceEnt = Entity.Null;
         float minDistance = 5;
         foreach (var hit in outHits)
         {
+            Debug.Log("hitent: " + hit.Entity);
             Entity hitEnt = hit.Entity;
             if (pickableResourceLookup.HasComponent(hitEnt))
             {
@@ -142,7 +146,7 @@ partial struct OnPickResource_RpcHandler : ISystem
                 }
             }
         }
-
+        Debug.Log("closestPickableResourceEnt: " + closestPickableResourceEnt);
         outHits.Dispose();
         if (pickableResourceEnt.Equals(Entity.Null)) return false;
         closestPickableResourceEnt = pickableResourceEnt;
@@ -155,25 +159,21 @@ partial struct OnPickResource_RpcHandler : ISystem
         PickableResource pickableResource = SystemAPI.GetComponent<PickableResource>(pickableResourceEnt);
         ResourceId resourceId = pickableResource.ResourceId;
         ResourceTypeId resourceTypeId = pickableResource.ResourceTypeId;
-
         long elapsedTime = (long)SystemAPI.Time.ElapsedTime;
         if (!ResourceUtils.TryGetPickableResource(resourceTypeId, ref state, out PickableResource_StaticData pickableResource_StaticData, ref query1)) return;
         if (!ResourceUtils.TryDeactivateResource(ref state, ref pickableResourceEnt, in resourceId, elapsedTime, ref ecb, ref resourceQuery, ref serverInfoQuery)) return;
-
+        
         var outputAmounts = new NativeList<int>(pickableResource_StaticData.OutputRangeAmount.Length, Allocator.TempJob);
-        ResourceUtils.GenerateOutputItemsAmount(in pickableResource_StaticData.OutputRangeAmount, ref outputAmounts);
+        ResourceUtils.GenerateOutputItemsAmount(in pickableResource_StaticData.OutputRangeAmount, ref outputAmounts, ref rng);
         NativeList<InventoryItem_StaticData> inventoryItem_StaticDataList = new NativeList<InventoryItem_StaticData>(pickableResource_StaticData.OutputRangeAmount.Length, Allocator.TempJob);
         JobHandle getInventoryItemStaticDataJobHandle = new GetInventoryItemStaticDataJob
         {
             inventoryItem_StaticDataList = inventoryItem_StaticDataList,
             pickableResource_StaticData = pickableResource_StaticData
         }.Schedule(state.Dependency);
-
         NativeList<int> currentOutputAmountsAdded = new NativeList<int>(pickableResource_StaticData.OutputRangeAmount.Length, Allocator.TempJob);
         for (int i = 0; i < pickableResource_StaticData.OutputRangeAmount.Length; i++) currentOutputAmountsAdded.Add(0);
-        Debug.Log("A");
         MiscPrefabs miscPrefabs = SystemAPI.GetSingleton<MiscPrefabs>();
-        Debug.Log("miscPrefabs: " + miscPrefabs.InventoryItemGhostPrefab);
         JobHandle addPickResToExistingItemsInGhostInvJobHandle = new AddPickResToExistingItemsInGhostInvJob
         {
             inventoryItem_StaticDataList = inventoryItem_StaticDataList,
@@ -183,12 +183,10 @@ partial struct OnPickResource_RpcHandler : ISystem
             outputAmounts = outputAmounts,
             currentOutputAmountsAdded = currentOutputAmountsAdded,
         }.Schedule(getInventoryItemStaticDataJobHandle);
-        Debug.Log("B");
 
         ref var serverInfo = ref SystemAPI.GetSingletonRW<ServerInfo>().ValueRW;
         int newId = serverInfo.NextAvailableItemId;
         serverInfo.NextAvailableItemId += 1;
-        Debug.Log("serverInfo.NextAvailableItemId: " + serverInfo.NextAvailableItemId);
         JobHandle addRemainingItemsHandle = new AddRemainingItemsJob
         {
             outputAmounts = outputAmounts,
@@ -203,7 +201,6 @@ partial struct OnPickResource_RpcHandler : ISystem
             intItemId = newId
         }.Schedule(addPickResToExistingItemsInGhostInvJobHandle);
         state.Dependency = addRemainingItemsHandle;
-        Debug.Log("C");
 
         state.Dependency.Complete();
 
@@ -230,13 +227,11 @@ partial struct OnPickResource_RpcHandler : ISystem
         public ComponentLookup<InventorySlotTracker> inventorySlotTrackerLookup;
         void Execute(Entity entity, ref DynamicBuffer<InventoryItem_StaticData> inventoryItem_StaticData)
         {
-            Debug.Log("inventoryItem_StaticData");
             for (int i = 0; i < inventoryItem_StaticDataList.Length; i++)
             { // each element in the inventoryItem_StaticDataList represents static data attached to an inventory item,
               // by which the inventory item is received as an output item from when picking a resource
                 if (currentOutputAmountsAdded[i] < outputAmounts[i]) // only if theres an amount to add left we will continue
                 {
-                    Debug.Log("currentOutputAmountsAdded: " + currentOutputAmountsAdded[i] + " outputAmounts[i]: " + outputAmounts[i]);
                     int remaining = outputAmounts[i] - currentOutputAmountsAdded[i]; // find exact amount left
                     int maxQuantity = inventoryItem_StaticDataList[i].MaxQuantity; // stack size of inv type
 
@@ -251,24 +246,21 @@ partial struct OnPickResource_RpcHandler : ISystem
 
                         int quantity = math.min(remaining, maxQuantity);
                         int newIndexSlot = inventorySlotTracker.LastIndexSlot;
-                        Debug.Log("inventorySlotTracker.LastIndexSlot: " + inventorySlotTracker.LastIndexSlot);
                         
                         inventorySlotTracker.LastIndexSlot = newIndexSlot;
                         inventorySlotTrackerLookup[characterEnt] = inventorySlotTracker; // reassign new last index slot in use
-                        Debug.Log("ent: " + ent.Index);
+
                         ecb.AddComponent(ent, new InventoryItem
                         {
                             ItemTypeId = outputItems[i],
                             CurrentIndexSlot = newIndexSlot,
                             Quantity = quantity,
-                            ItemId = (ItemId)intItemId,
-                            IsLoaded = false
+                            ItemId = (ItemId)intItemId
                         });
-                        
+                        // NotLoaded component should already be instantiated in the prefab and enabled
                         inventorySlotTracker.LastIndexSlot = inventorySlotTracker.LastIndexSlot + 1;
                         inventorySlotTrackerLookup[characterEnt] = inventorySlotTracker;
 
-                        Debug.Log("networkId: " + inventorySlotTracker.LastIndexSlot);
                         ecb.AddComponent(ent, new GhostOwner
                         {
                             NetworkId = networkId
@@ -292,17 +284,13 @@ partial struct OnPickResource_RpcHandler : ISystem
         [ReadOnly] public PickableResource_StaticData pickableResource_StaticData;
         void Execute(Entity entity, ref DynamicBuffer<InventoryItem_StaticData> inventoryItem_StaticData)
         {
-            Debug.Log("Runs once");
             foreach (InventoryItem_StaticData i in inventoryItem_StaticData)
             {
-                Debug.Log("InventoryItem_StaticData: " + i.ItemTypeId.ToInt());
                 foreach (ItemTypeId itemType in pickableResource_StaticData.OutputItems)
                 {
-                    Debug.Log("itemType: " + itemType);
                     if (itemType.Equals(i.ItemTypeId))
                     {
                         inventoryItem_StaticDataList.Add(i);
-                        Debug.Log("matching");
                     }
                 }
             }
@@ -324,10 +312,7 @@ partial struct OnPickResource_RpcHandler : ISystem
         public NativeList<int> currentOutputAmountsAdded; // to keep track of how much we have added so far
         void Execute(Entity entity, ref InventoryItem inventoryItem, in GhostOwner ghostOwner)
         {
-            Debug.Log("here");
-            Debug.Log("ghostOwner.NetworkId: " + ghostOwner.NetworkId);
             if (!ghostOwner.NetworkId.Equals(networkId)) return; // goes through only items according to a specific player
-            Debug.Log("inventoryItemServer: " + inventoryItem.ItemTypeId.ToString());
             NativeList<ItemTypeId> outputItems = pickableResource_StaticData.OutputItems; // inventory items to get
             for (int i = 0; i < outputItems.Length; i++)
             {
@@ -337,7 +322,7 @@ partial struct OnPickResource_RpcHandler : ISystem
                 {
                     if (currentOutputAmountsAdded[i] < outputAmounts[i])
                     {
-                        inventoryItem.IsLoaded = false;
+                        ecb.SetComponentEnabled<NotLoaded>(entity, true);
                         int remaining = outputAmounts[i] - currentOutputAmountsAdded[i];
 
                         // get quantity and max stack size
@@ -384,53 +369,17 @@ partial struct OnClientUIIsLoaded_RpcHandler : ISystem
         if (networkId.Equals(0)) continue;
         networkIds.Add(networkId);
     }
-    
-    Debug.Log("OnClientUIIsLoaded_RpcHandler");
 
-    foreach (var (inventoryItem, ghostOwner, entity) in SystemAPI.Query<RefRW<InventoryItem>, RefRO<GhostOwner>>().WithEntityAccess())
+    foreach (var (inventoryItem, ghostOwner, notLoaded, entity) in SystemAPI.Query<RefRW<InventoryItem>, RefRO<GhostOwner>, EnabledRefRW<NotLoaded>>().WithEntityAccess())
     {
         int networkIdForInvItem = ghostOwner.ValueRO.NetworkId;
         if (!networkIds.Contains(networkIdForInvItem)) return;
-        inventoryItem.ValueRW.IsLoaded = true;
+        notLoaded.ValueRW = false;
     }
-
-    RefRW<InventoryLoaded> invLoaded = SystemAPI.GetSingletonRW<InventoryLoaded>();
-    invLoaded.ValueRW.IsLoaded = true;
 
     networkIds.Dispose();
     ecb.Playback(state.EntityManager);
     ecb.Dispose();
-    /*public void OnCreate(ref SystemState state)
-    {
-        var q = state.GetEntityQuery(typeof(InventoryUIIsLoaded_RPC), typeof(ReceiveRpcCommandRequest));
-        state.RequireForUpdate(q);
-    }
-    public void OnUpdate(ref SystemState state)
-    {
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
-        int temporaryPlayerCount = 150; //! should be changed in the future
-
-        NativeParallelHashSet<int> networkIds = new NativeParallelHashSet<int>(temporaryPlayerCount, Allocator.Temp); 
-        foreach (var (invUILoadedRpc, receiveRpc, entity) in SystemAPI.Query<RefRO<InventoryUIIsLoaded_RPC>, RefRO<ReceiveRpcCommandRequest>>().WithEntityAccess())
-        {
-            ecb.DestroyEntity(entity);
-            int networkId = networkIdByReceiveRpc(ref state, receiveRpc);
-            if (networkId.Equals(0)) continue;
-            networkIds.Add(networkId);
-        }
-        
-        Debug.Log("OnClientUIIsLoaded_RpcHandler");
-
-        foreach (var (inventoryItem, ghostOwner, entity) in SystemAPI.Query<RefRW<InventoryItem>, RefRO<GhostOwner>>().WithEntityAccess())
-        {
-            int networkIdForInvItem = ghostOwner.ValueRO.NetworkId;
-            if (!networkIds.Contains(networkIdForInvItem)) return;
-            inventoryItem.ValueRW.IsLoaded = true;
-        }
-
-        networkIds.Dispose();
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();*/
 }
 
     private int networkIdByReceiveRpc(ref SystemState state, RefRO<ReceiveRpcCommandRequest> receiveRpc)

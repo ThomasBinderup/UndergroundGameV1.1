@@ -11,7 +11,7 @@ using UnityEngine;
 /// </summary>
 public class ResourceGameObject : MonoBehaviour // primarily server side script
 {
-    [HideInInspector] private int respawnTime_Seconds = 60;
+    [HideInInspector] private int respawnTime_Seconds = 60; //! should be changed in future
     void Start()
     {
         var world = World.DefaultGameObjectInjectionWorld;

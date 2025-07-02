@@ -42,86 +42,86 @@ public partial class UpdateInventoryUI : SystemBase
     private InventoryManager inventoryManager;
     protected override void OnCreate()
     {
-        var q = GetEntityQuery(typeof(InventoryItem));
+        // we actually dont have to filter notloaded because NotLoaded will always be there despite being disabled (it extends IEnableComponent interface), but
+        // despite this the Archetype does not change whether its disabled or enabled, so RequireForUpdate doesnt care whether its enabled or not
+        EntityQuery q = new EntityQueryBuilder(Allocator.Temp).WithAll<InventoryItem, NotLoaded>().Build(this);
         RequireForUpdate(q);
     }
 
     protected override void OnStartRunning()
     {
+        invSlots = GameObject.FindGameObjectWithTag("InventorySlots");
+
         var inventoryManagerGM = GameObject.FindGameObjectWithTag("InventoryManager");
-        Debug.Log("inventoryManagerGM: " + inventoryManagerGM);
         inventoryManager = inventoryManagerGM.GetComponent<InventoryManager>();
-        Debug.Log("inventoryManager: " + inventoryManager);
+
         uiItemToItemId = inventoryManager.UIItemToItemId;
         fullInventorySlotPrefab = inventoryManager.FullInventorySlotPrefab;
         idToSpriteDic = inventoryManager.IdToSpriteDic;
-        Debug.Log("idToSpriteDic: " + idToSpriteDic);
         fullInventoryItemPrefab = inventoryManager.FullInventoryItemPrefab;
-        invSlots = GameObject.FindGameObjectWithTag("InventorySlots");
+        
     }
     protected override void OnUpdate()
     {
-        Debug.Log("Should log once");
         var ecb = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (inventoryLoaded, e) in SystemAPI.Query<RefRO<InventoryLoaded>>().WithEntityAccess())
+        bool inventoryLoaded = false;
+        foreach (var (inventoryItemGhost, notLoaded) in SystemAPI.Query<RefRO<InventoryItem>, EnabledRefRW<NotLoaded>>())
         {
-            Debug.Log("inventoryLoaded: " + inventoryLoaded.ValueRO.IsLoaded);
-        }
+            inventoryLoaded = true;
+            Debug.Log("inventoryItemGhost: " + inventoryItemGhost);
+            Debug.Log("Abc");
 
-        foreach (var (inventoryItemGhost, e) in SystemAPI.Query<RefRO<InventoryItem>>().WithEntityAccess())
+            int inventoryUISlotsCount = invSlots.transform.childCount;
+
+            // get static inventory values
+            var invItem_StaDataBuf = SystemAPI.GetSingletonBuffer<InventoryItem_StaticData>();
+            int maxQuantity = 1;
+            int maxDurability = 0;
+            foreach (var staticData in invItem_StaDataBuf)
             {
-                Debug.Log("inventoryItemGhost: " + inventoryItemGhost);
-                Debug.Log("Abc");
-                if (inventoryItemGhost.ValueRO.IsLoaded) return;
-                var rpcEnt = ecb.CreateEntity();
-                ecb.AddComponent(rpcEnt, typeof(InventoryUIIsLoaded_RPC));
-                ecb.AddComponent(rpcEnt, typeof(SendRpcCommandRequest));
-
-                int inventoryUISlotsCount = invSlots.transform.childCount;
-
-                // get static inventory values
-                var invItem_StaDataBuf = SystemAPI.GetSingletonBuffer<InventoryItem_StaticData>();
-                int maxQuantity = 1;
-                int maxDurability = 0;
-                foreach (var staticData in invItem_StaDataBuf)
+                if (staticData.ItemTypeId.Equals(inventoryItemGhost.ValueRO.ItemTypeId))
                 {
-                    if (staticData.ItemTypeId.Equals(inventoryItemGhost.ValueRO.ItemTypeId))
-                    {
-                        maxQuantity = staticData.MaxQuantity;
-                        maxDurability = staticData.MaxDurability;
-                        break;
-                    }
-                }
-                Debug.Log("inventoryUISlotsCount: " + inventoryUISlotsCount + " inventoryItemGhost.ValueRO.CurrentIndexSlot + 1: " + inventoryItemGhost.ValueRO.CurrentIndexSlot + 1);
-                if (inventoryUISlotsCount >= inventoryItemGhost.ValueRO.CurrentIndexSlot + 1)
-                { // refresh item values
-                    Transform inventorySlot = invSlots.transform.GetChild(inventoryItemGhost.ValueRO.CurrentIndexSlot);
-                    Transform inventoryItem_UI = inventorySlot.GetChild(0);
-                    GetUIChildElements(inventoryItem_UI, out Transform quantity_UI, out Transform durability_UI);
-                    UpdateItemChildElements(inventoryItemGhost.ValueRO, quantity_UI, durability_UI, maxQuantity, maxDurability);
-                }
-                else
-                { // add new UI inventory item from ghost inventory
-                    var newFullInventorySlot = GameObject.Instantiate(fullInventorySlotPrefab, invSlots.transform).transform;
-                    var newInventoryItem = newFullInventorySlot.GetChild(0);
-
-                    if (!uiItemToItemId.TryAdd(newInventoryItem.gameObject, inventoryItemGhost.ValueRO.ItemId))
-                    {
-                        uiItemToItemId[newInventoryItem.gameObject] = inventoryItemGhost.ValueRO.ItemId;
-                    }
-
-                    var itemImage = newInventoryItem.GetComponent<UnityEngine.UI.Image>();
-
-                    if (!idToSpriteDic.TryGetValue(inventoryItemGhost.ValueRO.ItemTypeId, out Sprite itemSprite)) return;
-                    itemImage.sprite = itemSprite;
-
-                    GetUIChildElements(newInventoryItem, out Transform quantity_UI, out Transform durability_UI);
-                    UpdateItemChildElements(inventoryItemGhost.ValueRO, quantity_UI, durability_UI, maxQuantity, maxDurability);
-
-                    newFullInventorySlot.SetSiblingIndex(invSlots.transform.childCount - 1);
+                    maxQuantity = staticData.MaxQuantity;
+                    maxDurability = staticData.MaxDurability;
+                    break;
                 }
             }
-        ;
+            Debug.Log("inventoryUISlotsCount: " + inventoryUISlotsCount + " inventoryItemGhost.ValueRO.CurrentIndexSlot + 1: " + inventoryItemGhost.ValueRO.CurrentIndexSlot + 1);
+            if (inventoryUISlotsCount >= inventoryItemGhost.ValueRO.CurrentIndexSlot + 1)
+            { // refresh item values
+                Transform inventorySlot = invSlots.transform.GetChild(inventoryItemGhost.ValueRO.CurrentIndexSlot);
+                Transform inventoryItem_UI = inventorySlot.GetChild(0);
+                GetUIChildElements(inventoryItem_UI, out Transform quantity_UI, out Transform durability_UI);
+                UpdateItemChildElements(inventoryItemGhost.ValueRO, quantity_UI, durability_UI, maxQuantity, maxDurability);
+            }
+            else
+            { // add new UI inventory item from ghost inventory
+                var newFullInventorySlot = GameObject.Instantiate(fullInventorySlotPrefab, invSlots.transform).transform;
+                var newInventoryItem = newFullInventorySlot.GetChild(0);
+
+                if (!uiItemToItemId.TryAdd(newInventoryItem.gameObject, inventoryItemGhost.ValueRO.ItemId))
+                {
+                    uiItemToItemId[newInventoryItem.gameObject] = inventoryItemGhost.ValueRO.ItemId;
+                }
+
+                var itemImage = newInventoryItem.GetComponent<UnityEngine.UI.Image>();
+
+                if (!idToSpriteDic.TryGetValue(inventoryItemGhost.ValueRO.ItemTypeId, out Sprite itemSprite)) return;
+                itemImage.sprite = itemSprite;
+
+                GetUIChildElements(newInventoryItem, out Transform quantity_UI, out Transform durability_UI);
+                UpdateItemChildElements(inventoryItemGhost.ValueRO, quantity_UI, durability_UI, maxQuantity, maxDurability);
+
+                newFullInventorySlot.SetSiblingIndex(invSlots.transform.childCount - 1);
+            }
+        }
+
+        if (inventoryLoaded)
+        {
+            var rpcEnt = ecb.CreateEntity();
+            ecb.AddComponent(rpcEnt, typeof(InventoryUIIsLoaded_RPC));
+            ecb.AddComponent(rpcEnt, typeof(SendRpcCommandRequest));
+        }
 
         ecb.Playback(EntityManager);
         ecb.Dispose();
@@ -187,3 +187,4 @@ public partial class UpdateInventoryUI : SystemBase
         }
     }
 }
+

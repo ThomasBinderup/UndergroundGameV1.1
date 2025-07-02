@@ -63,14 +63,14 @@ public static class ResourceUtils
     }
 
     [BurstCompile]
-    public static void GenerateOutputItemsAmount(in NativeList<int2> outputRanges, ref NativeList<int> outputAmounts)
+    public static void GenerateOutputItemsAmount(in NativeList<int2> outputRanges, ref NativeList<int> outputAmounts, ref Unity.Mathematics.Random rng)
     {
-        Unity.Mathematics.Random rng = new Unity.Mathematics.Random(1);
-
         for (int i = 0; i < outputRanges.Length; i++)
         {
+
             int2 range = outputRanges[i];
-            outputAmounts.Add(rng.NextInt(range.x, range.y));
+            int ranOutput = rng.NextInt(range.x, range.y);
+            outputAmounts.Add(ranOutput);
         }
     }
 }

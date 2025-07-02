@@ -13,14 +13,25 @@ partial struct SetupStaticResourceData : ISystem
         var buffer = ecb.AddBuffer<PickableResource_StaticData>(e);
 
         // Add each individual resource item and its static data
-        var outputItems_5001 = new NativeList<ItemTypeId>(5, Allocator.Persistent) { (ItemTypeId)1001 };
-        var outputRangeAmount_5001 = new NativeList<int2>(5, Allocator.Persistent) { new(2, 6) };
+        var outputItems_5001 = new NativeList<ItemTypeId>(1, Allocator.Persistent) { (ItemTypeId)1001 };
+        var outputRangeAmount_5001 = new NativeList<int2>(1, Allocator.Persistent) { new(2, 6) };
 
         buffer.Add(new PickableResource_StaticData
         {
             ResourceTypeId = (ResourceTypeId)5001,
             OutputItems = outputItems_5001,
             OutputRangeAmount = outputRangeAmount_5001
+        });
+
+        // add mushroom static data
+        var outputItems_5002 = new NativeList<ItemTypeId>(1, Allocator.Persistent) { (ItemTypeId)1002 };
+        var outputRangeAmount_5002 = new NativeList<int2>(1, Allocator.Persistent) { new(1, 2) };
+
+        buffer.Add(new PickableResource_StaticData
+        {
+            ResourceTypeId = (ResourceTypeId)5002,
+            OutputItems = outputItems_5002,
+            OutputRangeAmount = outputRangeAmount_5002
         });
         
         ecb.Playback(state.EntityManager);

@@ -16,9 +16,41 @@ partial struct SetupStaticInventoryItemData : ISystem
         buffer.Add(new InventoryItem_StaticData
         {
             ItemTypeId = (ItemTypeId)1001,
-            MaxQuantity = 3,
+            MaxQuantity = 100,
             Description = new FixedString128Bytes("A stone"),
             Name = new FixedString32Bytes("Stone")
+        });
+
+        buffer.Add(new InventoryItem_StaticData
+        {
+            ItemTypeId = (ItemTypeId)1002,
+            MaxQuantity = 10,
+            Description = new FixedString128Bytes("A mushroom"),
+            Name = new FixedString32Bytes("Beech Mushroom")
+        });
+
+        buffer.Add(new InventoryItem_StaticData
+        {
+            ItemTypeId = (ItemTypeId)1003,
+            MaxQuantity = 100,
+            Description = new FixedString128Bytes("A green berry"),
+            Name = new FixedString32Bytes("Green Berry")
+        });
+
+        buffer.Add(new InventoryItem_StaticData
+        {
+            ItemTypeId = (ItemTypeId)1004,
+            MaxQuantity = 100,
+            Description = new FixedString128Bytes("A small leave"),
+            Name = new FixedString32Bytes("Small Leave")
+        });
+
+        buffer.Add(new InventoryItem_StaticData
+        {
+            ItemTypeId = (ItemTypeId)1005,
+            MaxQuantity = 100,
+            Description = new FixedString128Bytes("A stick"),
+            Name = new FixedString32Bytes("Stick")
         });
         
         ecb.Playback(state.EntityManager);
