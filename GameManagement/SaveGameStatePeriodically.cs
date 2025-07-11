@@ -45,6 +45,7 @@ partial struct SaveGameStatePeriodically : ISystem
 
     private void updateServerInfoTable(SQLiteConnection db, EntityQuery entityQuery, ref SystemState state)
     {
+        Debug.Log("ServerInfo: A");
         ServerInfo serverInfo = entityQuery.GetSingleton<ServerInfo>();
         long newServerAge = serverInfo.ServerAgeAtBoot + (long)SystemAPI.Time.ElapsedTime;
  

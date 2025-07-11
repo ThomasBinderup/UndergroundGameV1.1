@@ -41,16 +41,16 @@ partial struct SetupStaticInventoryItemData : ISystem
         {
             ItemTypeId = (ItemTypeId)1004,
             MaxQuantity = 100,
-            Description = new FixedString128Bytes("A small leave"),
-            Name = new FixedString32Bytes("Small Leave")
+            Description = new FixedString128Bytes("A plant thread"),
+            Name = new FixedString32Bytes("Plant Thread")
         });
 
         buffer.Add(new InventoryItem_StaticData
         {
             ItemTypeId = (ItemTypeId)1005,
             MaxQuantity = 100,
-            Description = new FixedString128Bytes("A stick"),
-            Name = new FixedString32Bytes("Stick")
+            Description = new FixedString128Bytes("A flarry berry"),
+            Name = new FixedString32Bytes("Flarry Berry")
         });
         
         ecb.Playback(state.EntityManager);

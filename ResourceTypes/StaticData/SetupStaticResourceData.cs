@@ -33,6 +33,16 @@ partial struct SetupStaticResourceData : ISystem
             OutputItems = outputItems_5002,
             OutputRangeAmount = outputRangeAmount_5002
         });
+
+        var outputItems_5003 = new NativeList<ItemTypeId>(1, Allocator.Persistent) { (ItemTypeId)1003, (ItemTypeId)1004, (ItemTypeId)1005  };
+        var outputRangeAmount_5003 = new NativeList<int2>(1, Allocator.Persistent) { new(1, 4), new(3, 20), new(1, 4) };
+
+        buffer.Add(new PickableResource_StaticData
+        {
+            ResourceTypeId = (ResourceTypeId)5003,
+            OutputItems = outputItems_5003,
+            OutputRangeAmount = outputRangeAmount_5003
+        });
         
         ecb.Playback(state.EntityManager);
         ecb.Dispose();

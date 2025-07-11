@@ -4,6 +4,7 @@ using UnityEngine;
 public class InputMasterManager : MonoBehaviour
 {
     [HideInInspector] public static PlayerInputs Controls;
+    [SerializeField] private InventoryInputs inventoryInputs;
 
     void Awake()
     {
@@ -12,6 +13,8 @@ public class InputMasterManager : MonoBehaviour
 
     private void OnEnable()
     {
+        Controls.Player.TogglePlayerMenu.performed += ctx => inventoryInputs.TogglePlayerMenu(ctx);
+        Controls.Player.PickResource.performed += ctx => inventoryInputs.PickResource(ctx);
         Controls.Enable();
     }
     

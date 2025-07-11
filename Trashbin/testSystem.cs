@@ -1,89 +1,62 @@
+using Rukhanka;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using Unity.VisualScripting;
 using UnityEngine;
-
-[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-partial struct testSystem : ISystem
-{
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<TestRpc>();
-    }
-
-    // [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        MiscPrefabs miscPrefabs = SystemAPI.GetSingleton<MiscPrefabs>();
-        Debug.Log("testRPC");
-        var e = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (testRpc, receive, entity) in SystemAPI.Query<RefRO<TestRpc>, RefRO<ReceiveRpcCommandRequest>>().WithEntityAccess())
-        {
-            var ent = e.Instantiate(miscPrefabs.InventoryItemGhostPrefab);
-            e.AddComponent(ent, new InventoryItem
-            {
-                ItemTypeId = (ItemTypeId)1001,
-                CurrentIndexSlot = 1,
-                Quantity = 1,
-                ItemId = (ItemId)200
-            });
-
-            e.AddComponent(ent, new testComp
-            {
-                test = 1,
-            });
-
-            Entity networkConnectionEnt = receive.ValueRO.SourceConnection;
-            Debug.Log("networkConnectionEnt: " + networkConnectionEnt);
-
-            if (!SystemAPI.HasComponent<NetworkId>(networkConnectionEnt)) return;
-            NetworkId networkId = SystemAPI.GetComponent<NetworkId>(networkConnectionEnt);
-            int networkIdValue = networkId.Value;
-            Debug.Log("networkIdValue: " + networkIdValue);
-            e.AddComponent(ent, new GhostOwner
-            {
-                NetworkId = networkIdValue
-            });
-
-            e.DestroyEntity(entity);
-        }
-        Debug.Log("tester");
-
-        
-
-
-        e.Playback(state.EntityManager);
-        e.Dispose();
-    }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-
-    }
-}
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 partial struct testSystem_client : ISystem
 {
+    bool runOnce;
+    BufferLookup<AnimatorControllerParameterComponent> paramBufLookup;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<InventoryItem>();
+        paramBufLookup = state.GetBufferLookup<AnimatorControllerParameterComponent>();
+        state.RequireForUpdate<MiscPrefabs>();  
     }
 
     // [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        FastAnimatorParameter runSpeed = new FastAnimatorParameter("RunSpeed");
+
+        paramBufLookup.Update(ref state);
+        // var ecb = new EntityCommandBuffer(Allocator.Temp);
+        if (!runOnce)
+        {
+            runOnce = true;
+            var miscPrefabs = SystemAPI.GetSingleton<MiscPrefabs>();
+            var e = state.EntityManager.Instantiate(miscPrefabs.TestAnimChar);
+            SystemAPI.SetComponent(e, new GhostOwner
+            {
+                NetworkId = 1
+            });
+
+            if (state.EntityManager.HasComponent<AnimatorControllerParameterIndexTableComponent>(e))
+            {
+            var acpit = SystemAPI.GetComponent<AnimatorControllerParameterIndexTableComponent>(e);
+            paramBufLookup.TryGetBuffer(e, out var acpc);
+            runSpeed.SetRuntimeParameterData(acpit.value, acpc, new ParameterValue() { floatValue = 2 });
+            }
+        }
         
-        var ecb = new EntityCommandBuffer(Allocator.Temp);
+        
+        Debug.Log("yeah logs");
+        
         
         
 
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
+        //ecb.Playback(state.EntityManager);
+       // ecb.Dispose();
+        
+        
+        
+
+        
     }
 
     [BurstCompile]
@@ -92,11 +65,3 @@ partial struct testSystem_client : ISystem
 
     }
 }
-
-[GhostComponent]
-public struct testComp : IComponentData
-{
-    [GhostField]
-    public int test;
-}
-

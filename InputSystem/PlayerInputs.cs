@@ -99,6 +99,15 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""TogglePlayerMenu"",
+                    ""type"": ""Button"",
+                    ""id"": ""8bf2e55b-a2d2-4f42-bfef-59b304640eff"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -112,6 +121,17 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
                     ""action"": ""PickResource"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9104a07c-1712-45e5-8bfd-866e20d7d2cb"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""TogglePlayerMenu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -121,6 +141,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_PickResource = m_Player.FindAction("PickResource", throwIfNotFound: true);
+        m_Player_TogglePlayerMenu = m_Player.FindAction("TogglePlayerMenu", throwIfNotFound: true);
     }
 
     ~@PlayerInputs()
@@ -202,6 +223,7 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_PickResource;
+    private readonly InputAction m_Player_TogglePlayerMenu;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -217,6 +239,10 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/PickResource".
         /// </summary>
         public InputAction @PickResource => m_Wrapper.m_Player_PickResource;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/TogglePlayerMenu".
+        /// </summary>
+        public InputAction @TogglePlayerMenu => m_Wrapper.m_Player_TogglePlayerMenu;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -246,6 +272,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @PickResource.started += instance.OnPickResource;
             @PickResource.performed += instance.OnPickResource;
             @PickResource.canceled += instance.OnPickResource;
+            @TogglePlayerMenu.started += instance.OnTogglePlayerMenu;
+            @TogglePlayerMenu.performed += instance.OnTogglePlayerMenu;
+            @TogglePlayerMenu.canceled += instance.OnTogglePlayerMenu;
         }
 
         /// <summary>
@@ -260,6 +289,9 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
             @PickResource.started -= instance.OnPickResource;
             @PickResource.performed -= instance.OnPickResource;
             @PickResource.canceled -= instance.OnPickResource;
+            @TogglePlayerMenu.started -= instance.OnTogglePlayerMenu;
+            @TogglePlayerMenu.performed -= instance.OnTogglePlayerMenu;
+            @TogglePlayerMenu.canceled -= instance.OnTogglePlayerMenu;
         }
 
         /// <summary>
@@ -307,5 +339,12 @@ public partial class @PlayerInputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPickResource(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "TogglePlayerMenu" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnTogglePlayerMenu(InputAction.CallbackContext context);
     }
 }

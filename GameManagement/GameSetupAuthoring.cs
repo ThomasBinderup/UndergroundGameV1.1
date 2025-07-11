@@ -17,6 +17,8 @@ public class GameSetupAuthoring : MonoBehaviour
     private GameObject inventoryItemGhostPrefab;
     [SerializeField]
     private GameObject testGhostPrefab;
+    [SerializeField]
+    private GameObject testAnimChar;
 
     // Lists for linking ResourceTypeId to its associated prefab
     [SerializeField]
@@ -53,7 +55,8 @@ public class GameSetupAuthoring : MonoBehaviour
             AddComponent(entity, new MiscPrefabs
             {
                 InventoryItemGhostPrefab = GetEntity(a.inventoryItemGhostPrefab, TransformUsageFlags.None),
-                TestGhostPrefab = GetEntity(a.testGhostPrefab, TransformUsageFlags.None)
+                TestGhostPrefab = GetEntity(a.testGhostPrefab, TransformUsageFlags.None),
+                TestAnimChar = GetEntity(a.testAnimChar, TransformUsageFlags.Dynamic)
             });
 
         }

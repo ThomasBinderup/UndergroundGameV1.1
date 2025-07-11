@@ -15,6 +15,7 @@ public partial class FirstPersonPlayerInputsSystem : SystemBase
 {
     protected override void OnCreate()
     {
+        RequireForUpdate<InventoryClosed>();
         RequireForUpdate<NetworkTime>();
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<FirstPersonPlayer, FirstPersonPlayerInputs>().Build());
     }

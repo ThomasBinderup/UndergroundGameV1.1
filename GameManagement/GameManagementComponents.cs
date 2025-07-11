@@ -15,6 +15,7 @@ public struct MiscPrefabs : IComponentData
     public Entity InventoryItemGhostPrefab;
     public Entity TestGhostPrefab;
     public Entity InventoryLoadedPrefab;
+    public Entity TestAnimChar;
 }
 
 public struct ResourceTypeIdToPrefabEntity : IBufferElementData

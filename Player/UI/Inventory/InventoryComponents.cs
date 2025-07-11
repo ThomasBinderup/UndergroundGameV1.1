@@ -60,3 +60,11 @@ public struct InventoryUIIsLoaded_RPC : IRpcCommand
 public struct NotLoaded : IComponentData, IEnableableComponent
 {
 }
+
+/// <summary>
+/// Used to prevent ECS systems listening for certain player inputs, when inventory is closed (for instance, you cant walk when inside inventory)
+/// </summary>
+public struct InventoryClosed : IComponentData
+{
+
+}

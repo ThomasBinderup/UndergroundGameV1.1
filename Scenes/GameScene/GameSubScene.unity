@@ -341,10 +341,12 @@ MonoBehaviour:
   playerPrefab: {fileID: 577874318210893199, guid: 8c22dcbefac332745a1efbea69cb8bfc, type: 3}
   inventoryItemGhostPrefab: {fileID: 8347650839062051165, guid: 987e1e6740318194eaefa9803f3deabc, type: 3}
   testGhostPrefab: {fileID: 6326740190326195847, guid: 816259d6b0e84e34090bdc9020047528, type: 3}
-  resourceTypeIds_Key: 891300008a130000
+  testAnimChar: {fileID: 4319976709141457633, guid: 34feef6dce05f964fa518863cdcd9023, type: 3}
+  resourceTypeIds_Key: 891300008a1300008b130000
   resourcePrefabs_Value:
   - {fileID: 6310508018853783084, guid: b14f2c8179d20b24b9a94a8f2e999711, type: 3}
   - {fileID: 606839615987612446, guid: ce343bb485486484ab443d5bd7e0717b, type: 3}
+  - {fileID: 8484706476852144211, guid: ec45432dae2c47542b18559b6360131a, type: 3}
 --- !u!4 &781929310
 Transform:
   m_ObjectHideFlags: 0
