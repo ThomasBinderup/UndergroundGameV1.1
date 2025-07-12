@@ -34,3 +34,10 @@ By adding the rukhanka Rig Definition Authoring scripts the following components
 To make it networkable the following should manually be added:
     - AnimatorControllerParameterComponent buffer
     - AnimatorControllerParameterIndexTableComponent
+
+## Jobs
+Implementation of jobs in ECS
+![alt text](image.png)
+
+## RPCs
+It is very important that every ECS system that handles RPCs and uses client input data must have a method checking if the data sent from the client is valid to prevent cheating

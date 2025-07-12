@@ -15,7 +15,7 @@ public struct InventoryItemData_Client
 }
 public class InventoryManager : MonoBehaviour
 {
-    [HideInInspector] public Dictionary<GameObject, InventoryItemData_Client> UIItemToItemId = new Dictionary<GameObject, InventoryItemData_Client>();
+    [HideInInspector] public Dictionary<GameObject, InventoryItemData_Client> UIItemToItemId = new Dictionary<GameObject, InventoryItemData_Client>(); //! not in use
     public List<IdSpritePair> idToSpriteDicList = new List<IdSpritePair>();
     [HideInInspector] public Dictionary<ItemTypeId, Sprite> IdToSpriteDic = new Dictionary<ItemTypeId, Sprite>(); // accessed by scripts
     public GameObject FullInventorySlotPrefab;

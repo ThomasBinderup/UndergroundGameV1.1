@@ -2,7 +2,9 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.UniversalDelegates;
 using Unity.NetCode;
-
+/// <summary>
+/// Represents an inventory ghost item. A central part of the inventory system.
+/// </summary>
 [GhostComponent(OwnerSendType = SendToOwnerType.SendToOwner)] // Inventory items should only be visible to the player itself
 public struct InventoryItem : IComponentData
 {
@@ -67,4 +69,17 @@ public struct NotLoaded : IComponentData, IEnableableComponent
 public struct InventoryClosed : IComponentData
 {
 
+}
+
+public struct SwapInventoryItem_RPC : IComponentData
+{
+    public int SwapFrom; // range from 0-299
+    public int SwapTo; // range from 0-299
+    public bool MoveItemToLastSlot;
+}
+
+public struct NetworkIdToInventoryItemsList : IComponentData
+{
+    public int NetworkId;
+    public NativeList<Entity> InventoryItemEntitiesList;
 }

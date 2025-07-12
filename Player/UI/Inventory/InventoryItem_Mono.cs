@@ -5,7 +5,7 @@ using UnityEngine.UI;
 /// <summary>
 /// "InventoryItemMono" is a monobehaviour component attached to each item, that is in an inventory to allow listening for UI events
 /// </summary>
-public class InventoryItemMono : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
+public class InventoryItem_Mono : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image image; // Image that holds the 2D sprite representing the inventory item
     [HideInInspector] public Transform parentAfterDrag;
